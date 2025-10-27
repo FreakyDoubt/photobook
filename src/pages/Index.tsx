@@ -31,8 +31,20 @@ const Index = () => {
 
   // Save to localStorage whenever albumPages changes
   useEffect(() => {
-    localStorage.setItem("albumPhotos", JSON.stringify(albumPages));
+    try {
+      localStorage.setItem("albumPhotos", JSON.stringify(albumPages));
+    } catch (error) {
+      if (error instanceof Error && error.name === "QuotaExceededError") {
+        console.error("Storage quota exceeded. Album too large.");
+        // Keep only the current state in memory, don't try to save
+      }
+    }
   }, [albumPages]);
+
+  const handleClearAlbum = () => {
+    setAlbumPages([]);
+    localStorage.removeItem("albumPhotos");
+  };
 
   const handlePhotosUpload = (newPhotos: { src: string; caption: string }[]) => {
     const updatedPages = [...albumPages];
@@ -110,7 +122,7 @@ const Index = () => {
 
       {/* Upload Section */}
       <div className="relative z-10">
-        <PhotoUpload onPhotosUpload={handlePhotosUpload} />
+        <PhotoUpload onPhotosUpload={handlePhotosUpload} onClearAlbum={handleClearAlbum} />
       </div>
 
       {/* Album Carousel */}
