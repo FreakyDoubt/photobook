@@ -25,30 +25,8 @@ const Index = () => {
     if (saved) {
       return JSON.parse(saved);
     }
-    // Default sample data
-    return [
-      {
-        photos: [
-          { src: placeholder1, caption: "Moment 1" },
-          { src: placeholder2, caption: "Moment 2" },
-          { src: placeholder3, caption: "Moment 3" },
-        ],
-      },
-      {
-        photos: [
-          { src: placeholder2, caption: "Memory 1" },
-          { src: placeholder3, caption: "Memory 2" },
-          { src: placeholder1, caption: "Memory 3" },
-        ],
-      },
-      {
-        photos: [
-          { src: placeholder3, caption: "Happy Day 1" },
-          { src: placeholder1, caption: "Happy Day 2" },
-          { src: placeholder2, caption: "Happy Day 3" },
-        ],
-      },
-    ];
+    // Start with empty album
+    return [];
   });
 
   // Save to localStorage whenever albumPages changes
@@ -57,14 +35,30 @@ const Index = () => {
   }, [albumPages]);
 
   const handlePhotosUpload = (newPhotos: { src: string; caption: string }[]) => {
-    // Group photos into pages of 3
-    const newPages = [];
-    for (let i = 0; i < newPhotos.length; i += 3) {
-      newPages.push({
-        photos: newPhotos.slice(i, i + 3),
+    const updatedPages = [...albumPages];
+    let remainingPhotos = [...newPhotos];
+
+    // Check if last page has space (less than 3 photos)
+    if (updatedPages.length > 0) {
+      const lastPage = updatedPages[updatedPages.length - 1];
+      const spaceLeft = 3 - lastPage.photos.length;
+      
+      if (spaceLeft > 0) {
+        // Fill the last page first
+        const photosToAdd = remainingPhotos.slice(0, spaceLeft);
+        lastPage.photos = [...lastPage.photos, ...photosToAdd];
+        remainingPhotos = remainingPhotos.slice(spaceLeft);
+      }
+    }
+
+    // Group remaining photos into new pages of 3
+    for (let i = 0; i < remainingPhotos.length; i += 3) {
+      updatedPages.push({
+        photos: remainingPhotos.slice(i, i + 3),
       });
     }
-    setAlbumPages([...albumPages, ...newPages]);
+
+    setAlbumPages(updatedPages);
   };
 
   return (
@@ -121,17 +115,23 @@ const Index = () => {
 
       {/* Album Carousel */}
       <div className="container mx-auto px-4 pb-20 relative z-10">
-        <Carousel className="w-full max-w-7xl mx-auto">
-          <CarouselContent>
-            {albumPages.map((page, index) => (
-              <CarouselItem key={index}>
-                <AlbumPage photos={page.photos} />
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious className="left-4 bg-card/80 backdrop-blur-sm hover:bg-primary hover:text-primary-foreground" />
-          <CarouselNext className="right-4 bg-card/80 backdrop-blur-sm hover:bg-primary hover:text-primary-foreground" />
-        </Carousel>
+        {albumPages.length > 0 ? (
+          <Carousel className="w-full max-w-7xl mx-auto">
+            <CarouselContent>
+              {albumPages.map((page, index) => (
+                <CarouselItem key={index}>
+                  <AlbumPage photos={page.photos} />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="left-4 bg-card/80 backdrop-blur-sm hover:bg-primary hover:text-primary-foreground" />
+            <CarouselNext className="right-4 bg-card/80 backdrop-blur-sm hover:bg-primary hover:text-primary-foreground" />
+          </Carousel>
+        ) : (
+          <div className="text-center py-20">
+            <p className="text-2xl text-foreground/60">📸 Upload foto pertama untuk mulai album!</p>
+          </div>
+        )}
       </div>
 
       {/* Instructions */}
